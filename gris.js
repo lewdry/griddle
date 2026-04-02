@@ -39,11 +39,41 @@ const defaultSize = { dragX: 37, dragY: 23, portraitX: 23, portraitY: 37 };
 let cols = defaultSize.dragX;
 let rows = defaultSize.dragY;
 let pointerDown = false;
+let activePointerId = null;
+let lastToggledIndex = null;
 
 function getLayout() {
-  return window.matchMedia('(orientation: portrait)').matches
-    ? { x: defaultSize.portraitX, y: defaultSize.portraitY }
-    : { x: defaultSize.dragX, y: defaultSize.dragY };
+  const isPortrait = window.matchMedia('(orientation: portrait)').matches;
+  const targetX = isPortrait ? defaultSize.portraitX : defaultSize.dragX;
+  const targetY = isPortrait ? defaultSize.portraitY : defaultSize.dragY;
+
+  const wrapper = document.querySelector('.grid-wrap');
+  if (!wrapper) {
+    return { x: targetX, y: targetY };
+  }
+
+  const width = wrapper.clientWidth;
+  const height = wrapper.clientHeight;
+  if (width === 0 || height === 0) {
+    return { x: targetX, y: targetY };
+  }
+
+  const minCellSize = 12;
+  const maybeCols = Math.max(12, Math.min(targetX, Math.floor(width / minCellSize)));
+  const maybeRows = Math.max(12, Math.min(targetY, Math.floor(height / minCellSize)));
+
+  // Prefer the target layout when it fits in viewport; otherwise shrink proportionally
+  if (maybeCols === targetX && maybeRows === targetY) {
+    return { x: targetX, y: targetY };
+  }
+
+  const colScale = maybeCols / targetX;
+  const rowScale = maybeRows / targetY;
+  const scale = Math.min(colScale, rowScale, 1);
+  return {
+    x: Math.max(12, Math.floor(targetX * scale)),
+    y: Math.max(12, Math.floor(targetY * scale))
+  };
 }
 
 function createCells() {
@@ -59,11 +89,15 @@ function createCells() {
     cell.setAttribute('role', 'gridcell');
     cell.setAttribute('aria-pressed', 'false');
     cell.setAttribute('aria-label', `Cell ${Math.floor(i / cols) + 1} of ${cols * rows}`);
-    cell.addEventListener('pointerdown', toggleCell);
+    cell.addEventListener('pointerdown', onCellPointerDown);
     cell.addEventListener('pointerenter', onCellEnter);
     cell.addEventListener('keydown', onCellKeyDown);
     grid.appendChild(cell);
   }
+
+  grid.addEventListener('pointermove', onGridPointerMove);
+  grid.addEventListener('pointerup', onPointerUp);
+  grid.addEventListener('pointercancel', onPointerUp);
 }
 
 function updateStatus() {
@@ -144,18 +178,58 @@ function resetGrid() {
   paintWord(word);
 }
 
-function toggleCell(e) {
+function onCellPointerDown(e) {
   const cell = e.currentTarget;
+  const index = Number(cell.dataset.index);
   const isActive = cell.classList.toggle('active');
   cell.setAttribute('aria-pressed', String(isActive));
+
   pointerDown = true;
+  activePointerId = e.pointerId;
+  lastToggledIndex = index;
+
+  if (cell.setPointerCapture) {
+    cell.setPointerCapture(e.pointerId);
+  }
 }
 
 function onCellEnter(e) {
   if (!pointerDown) return;
+
   const cell = e.currentTarget;
+  const index = Number(cell.dataset.index);
+  if (!Number.isFinite(index) || index === lastToggledIndex) return;
+
   const isActive = cell.classList.toggle('active');
   cell.setAttribute('aria-pressed', String(isActive));
+  lastToggledIndex = index;
+}
+
+function onGridPointerMove(e) {
+  if (!pointerDown || e.pointerId !== activePointerId) return;
+
+  const cell = document.elementFromPoint(e.clientX, e.clientY)?.closest('.cell');
+  if (!(cell instanceof HTMLElement)) return;
+
+  const index = Number(cell.dataset.index);
+  if (!Number.isFinite(index) || index === lastToggledIndex) return;
+
+  const isActive = cell.classList.toggle('active');
+  cell.setAttribute('aria-pressed', String(isActive));
+  lastToggledIndex = index;
+}
+
+function onPointerUp(e) {
+  if (e.pointerId !== activePointerId) return;
+
+  pointerDown = false;
+  activePointerId = null;
+  lastToggledIndex = null;
+
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  if (el && el.releasePointerCapture && e.pointerId != null) {
+    try { el.releasePointerCapture(e.pointerId); } catch (_) {}
+  }
 }
 
 function onCellKeyDown(e) {
@@ -204,6 +278,8 @@ function focusCell(x, y) {
 
 window.addEventListener('pointerup', () => {
   pointerDown = false;
+  activePointerId = null;
+  lastToggledIndex = null;
 });
 
 window.addEventListener('resize', () => {
