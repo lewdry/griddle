@@ -47,33 +47,36 @@ function getLayout() {
   const targetX = isPortrait ? defaultSize.portraitX : defaultSize.dragX;
   const targetY = isPortrait ? defaultSize.portraitY : defaultSize.dragY;
 
-  const wrapper = document.querySelector('.grid-wrap');
-  if (!wrapper) {
-    return { x: targetX, y: targetY };
+  // Measure available space from viewport (works before grid-wrap is sized)
+  const vw = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+  const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+
+  const cs = getComputedStyle(document.body);
+  const padL = parseFloat(cs.paddingLeft) || 0;
+  const padR = parseFloat(cs.paddingRight) || 0;
+  const padT = parseFloat(cs.paddingTop) || 0;
+  const padB = parseFloat(cs.paddingBottom) || 0;
+
+  const header = document.querySelector('.header');
+  const headerH = header ? header.getBoundingClientRect().height : 0;
+  const headerMB = header ? (parseFloat(getComputedStyle(header).marginBottom) || 0) : 0;
+
+  const border = 2; // 1px border each side of grid-wrap
+  const maxAppWidth = 1000;
+  const availW = Math.min(vw - padL - padR, maxAppWidth) - border;
+  const availH = vh - padT - padB - headerH - headerMB - border;
+
+  // Largest square cell that fits the target grid
+  const cellSize = Math.max(1, Math.floor(Math.min(availW / targetX, availH / targetY)));
+
+  if (cellSize >= 8) {
+    return { x: targetX, y: targetY, cellSize };
   }
 
-  const width = wrapper.clientWidth;
-  const height = wrapper.clientHeight;
-  if (width === 0 || height === 0) {
-    return { x: targetX, y: targetY };
-  }
-
-  const minCellSize = 12;
-  const maybeCols = Math.max(12, Math.min(targetX, Math.floor(width / minCellSize)));
-  const maybeRows = Math.max(12, Math.min(targetY, Math.floor(height / minCellSize)));
-
-  // Prefer the target layout when it fits in viewport; otherwise shrink proportionally
-  if (maybeCols === targetX && maybeRows === targetY) {
-    return { x: targetX, y: targetY };
-  }
-
-  const colScale = maybeCols / targetX;
-  const rowScale = maybeRows / targetY;
-  const scale = Math.min(colScale, rowScale, 1);
-  return {
-    x: Math.max(12, Math.floor(targetX * scale)),
-    y: Math.max(12, Math.floor(targetY * scale))
-  };
+  // Extremely small screen: reduce grid dimensions
+  const x = Math.max(12, Math.floor(availW / 8));
+  const y = Math.max(12, Math.floor(availH / 8));
+  return { x, y, cellSize: 8 };
 }
 
 function createCells() {
@@ -169,6 +172,15 @@ function buildGrid() {
   const layout = getLayout();
   cols = layout.x;
   rows = layout.y;
+
+  // Set explicit dimensions for square cells
+  const wrapper = document.querySelector('.grid-wrap');
+  if (wrapper) {
+    const border = 2; // 1px border each side
+    wrapper.style.width = (layout.cellSize * cols + border) + 'px';
+    wrapper.style.height = (layout.cellSize * rows + border) + 'px';
+  }
+
   createCells();
   paintWord(randomWord());
 }
@@ -282,12 +294,18 @@ window.addEventListener('pointerup', () => {
   lastToggledIndex = null;
 });
 
-window.addEventListener('resize', () => {
-  const layout = getLayout();
-  if (layout.x !== cols || layout.y !== rows) {
-    buildGrid();
-  }
-});
+let resizeTimer = null;
+function onViewportChange() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(buildGrid, 150);
+}
+
+window.addEventListener('resize', onViewportChange);
+
+// iOS Safari: rebuild when URL bar appears/disappears
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', onViewportChange);
+}
 
 resetBtn.addEventListener('click', resetGrid);
 
