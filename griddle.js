@@ -3,6 +3,7 @@ const resetBtn = document.getElementById('resetBtn');
 const clearBtn = document.getElementById('clearBtn');
 const shareBtn = document.getElementById('shareBtn');
 const undoBtn = document.getElementById('undoBtn');
+const titleEl = document.querySelector('h1');
 
 const positiveWords = [
   'Able', 'About', 'Above', 'Ace', 'Adore', 'After', 'Again', 'Agile', 'Aid', 'Aim', 'Align', 'Alive', 'All', 'Also', 'Amaze', 'Ample', 'Amuse', 'And', 'Angel', 'Any', 'Apple', 'Apt', 'Are', 'Area', 'Arm', 'Art', 'Ask', 'Asset', 'Ate', 'Aura', 'Award', 'Aware', 'Away', 'Awe',
@@ -306,8 +307,9 @@ function randomWord() {
   return positiveWords[i];
 }
 
-function paintWord(word) {
+function paintWord(word, options = {}) {
   if (!word) return;
+  const topRow = Number.isInteger(options.topRow) ? options.topRow : null;
   const upper = word.toUpperCase();
   const chars = upper.split('');
   const glyphWidth = 5;
@@ -319,7 +321,11 @@ function paintWord(word) {
   const logicalCols = isPortrait ? rows : cols;
   const logicalRows = isPortrait ? cols : rows;
   const offsetX = Math.max(0, Math.floor((logicalCols - totalWidth) / 2));
-  const offsetY = Math.max(0, Math.floor((logicalRows - glyphHeight) / 2 - 3));
+  const centeredY = Math.max(0, Math.floor((logicalRows - glyphHeight) / 2));
+  const maxTopRow = Math.max(0, logicalRows - glyphHeight);
+  const offsetY = topRow == null
+    ? centeredY
+    : Math.max(0, Math.min(topRow, maxTopRow));
 
   clearGrid();
 
@@ -345,6 +351,13 @@ function paintWord(word) {
     }
   });
 
+}
+
+function handleTitleEasterEgg() {
+  if (!currentWord) return;
+  const beforeState = getGridState();
+  paintWord(currentWord, { topRow: 1 });
+  pushUndoState(beforeState);
 }
 
 function buildGrid() {
@@ -539,6 +552,7 @@ resetBtn.addEventListener('click', resetGrid);
 clearBtn.addEventListener('click', handleClear);
 shareBtn.addEventListener('click', handleShare);
 if (undoBtn) undoBtn.addEventListener('click', undo);
+if (titleEl) titleEl.addEventListener('pointerup', handleTitleEasterEgg);
 window.addEventListener('keydown', onWindowKeyDown);
 grid.addEventListener('pointermove', onGridPointerMove);
 grid.addEventListener('pointerup', onPointerUp);
