@@ -18,7 +18,7 @@ const positiveWords = [
   'Keen', 'Keep', 'Kept', 'Key', 'Kin', 'Kind', 'Kite', 'Knack', 'Knew', 'Know',
   'Land', 'Large', 'Last', 'Late', 'Laugh', 'Lead', 'Leap', 'Learn', 'Leave', 'Left', 'Less', 'Let', 'Life', 'Light', 'Like', 'Line', 'List', 'Lit', 'Live', 'Logic', 'Long', 'Look', 'Lost', 'Lot', 'Love', 'Low', 'Loyal', 'Lucid', 'Luck', 'Lucky',
   'Made', 'Magic', 'Make', 'Man', 'Many', 'Mark', 'Mate', 'Maths', 'Max', 'May', 'Mean', 'Men', 'Merry', 'Might', 'Mile', 'Mind', 'Mirth', 'Miss', 'Model', 'Money', 'Moon', 'Moral', 'More', 'Most', 'Move', 'Much', 'Mum', 'Muse', 'Music', 'Must',
-  'Name', 'Near', 'Neat', 'Need', 'Nerve', 'Never', 'New', 'Next', 'Nice', 'Nifty', 'Night', 'Noble', 'Non', 'Not', 'Note', 'Novel', 'Now',
+  'Name', 'Near', 'Neat', 'Need', 'Nerve', 'Never', 'New', 'Next', 'Nice', 'Nine', 'Nifty', 'Night', 'Noble', 'Non', 'Not', 'Note', 'Novel', 'Now',
   'Oasis', 'Off', 'Often', 'Okay', 'Old', 'Once', 'One', 'Only', 'Open', 'Order', 'Other', 'Our', 'Out', 'Over', 'Own',
   'Pace', 'Page', 'Pal', 'Paper', 'Part', 'Party', 'Pass', 'Past', 'Pax', 'Peace', 'Perk', 'Pick', 'Piece', 'Place', 'Plant', 'Play', 'Plus', 'Point', 'Poor', 'Pop', 'Power', 'Press', 'Proud', 'Pull', 'Pure', 'Push', 'Put',
   'Quick', 'Quiet', 'Quite',
@@ -29,7 +29,7 @@ const positiveWords = [
   'Very', 'Vibe', 'Vivid', 'Voice',
   'Walk', 'Wall', 'Want', 'Warm', 'Wash', 'Watch', 'Water', 'Way', 'Well', 'Went', 'Were', 'What', 'When', 'Where', 'Which', 'While', 'White', 'Who', 'Whole', 'Why', 'Will', 'Win', 'Wind', 'Wise', 'Wish', 'With', 'Wood', 'Word', 'Work', 'World', 'Worth', 'Would', 'Write', 'Wrong',
   'Year', 'Years', 'Yes', 'You', 'Young', 'Your', 'Yours',
-  'Zen', 'Zest', 'Zesty'
+  'Zen', 'Zest'
 ];
 
 const font5x7 = {
